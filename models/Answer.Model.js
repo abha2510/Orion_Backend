@@ -19,15 +19,10 @@ const answerSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  ratings: [
-    {
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      value: Number,
-    },
-  ],
+  ratings: {
+    type: Number,
+    default:0
+  }
 });
 
 const AnswerModel = mongoose.model("Answer", answerSchema);

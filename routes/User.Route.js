@@ -202,26 +202,16 @@ UserRouter.post("/questions/:questionId/answers", auth, async (req, res) => {
 
 
 // Rate a specific answer
-UserRouter.post("/answers/:answerId/rate", auth, async (req, res) => {
+UserRouter.patch("/answers/:answerId/rate", auth, async (req, res) => {
   try {
-    const { value } = req.body;
+    const { value } = req.body; 
     const { answerId } = req.params;
-    const userId = req.userId;
-
+    
     const answer = await AnswerModel.findById(answerId);
     if (!answer) {
       return res.status(404).json({ message: "Answer not found" });
     }
-
-    // Check if user has already rated the answer
-    const existingRating = answer.ratings.find(
-      (rating) => rating.userId.toString() === userId
-    );
-    if (existingRating) {
-      existingRating.value = value;
-    } else {
-      answer.ratings.push({ userId, value });
-    }
+    answer.ratings += value;
 
     await answer.save();
     res.status(200).json(answer);
@@ -229,6 +219,7 @@ UserRouter.post("/answers/:answerId/rate", auth, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 // Admin route to approve a specific answer
 UserRouter.patch(
   "/answers/:answerId/approve",
