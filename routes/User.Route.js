@@ -98,7 +98,7 @@ UserRouter.get("/questions", auth, async (req, res) => {
       query.approved = true;
     }
 
-    const questions = await QuestionModel.findById(query);
+    const questions = await QuestionModel.find(query);
     
     if (questions && questions.length > 0) {
       res.json(questions);
