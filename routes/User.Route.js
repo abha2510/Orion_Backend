@@ -109,6 +109,46 @@ UserRouter.get("/questions", auth, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+UserRouter.get("/answers", auth, async (req, res) => {
+  try {
+    let query = {};
+    if (!req.isAdmin) { 
+      query.approved = true;
+    }
+
+    const answers = await AnswerModel.find(query)
+      .populate('questionId') 
+      .populate('userId', 'username email') 
+    
+    if (answers && answers.length > 0) {
+      res.json(answers);
+    } else {
+      res.status(404).json({ message: "No answers found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+UserRouter.get('/questions/:questionId', async (req, res) => {
+  try {
+    const questionId = req.params.questionId;
+
+    // Fetch the question by its ID
+    const question = await QuestionModel.findById(questionId).populate('userId', 'username'); // I assumed you might want to get the username from the User reference, adjust as needed
+
+    if (!question) {
+      return res.status(404).json({ message: 'Question not found' });
+    }
+
+    // Fetch all answers associated with the question
+    const answers = await AnswerModel.find({ questionId: questionId }).populate('userId', 'username'); // Again, populating the username from the User reference, adjust as needed
+
+    res.status(200).json({ question, answers });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 
 
@@ -158,26 +198,7 @@ UserRouter.post("/questions/:questionId/answers", auth, async (req, res) => {
 });
 
 
-UserRouter.get("/answers", auth, async (req, res) => {
-  try {
-    let query = {};
-    if (!req.isAdmin) { 
-      query.approved = true;
-    }
 
-    const answers = await AnswerModel.find(query)
-      .populate('questionId') 
-      .populate('userId', 'username email') 
-    
-    if (answers && answers.length > 0) {
-      res.json(answers);
-    } else {
-      res.status(404).json({ message: "No answers found" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 
 // Rate a specific answer
