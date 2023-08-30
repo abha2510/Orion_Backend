@@ -7,7 +7,14 @@ require("dotenv").config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  allowedHeaders: 'Content-Type, Authorization, X-Requested-With'
+};
+
+app.use(cors(corsOptions));
 
 app.get("/", (req, res) => {
   res.send("Enhanced Dynamic FAQ System");
