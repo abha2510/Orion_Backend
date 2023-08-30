@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
   res.send("Enhanced Dynamic FAQ System");
 });
 
-app.use("/user", userRoutes);
+app.use("/", userRoutes);
 
 app.listen(process.env.PORT, async () => {
   try {
