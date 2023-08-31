@@ -61,10 +61,17 @@ UserRouter.get("/", auth, async (req, res) => {
 
 
 // Post a new question
+// Post a new question
 UserRouter.post("/questions", auth, async (req, res) => {
   try {
     const { text } = req.body;
     const userId = req.userId;
+
+    // Check if the user is banned
+    const user = await UserModel.findById(userId);
+    if (user.banned) {
+      return res.status(403).json({ message: "You are banned and cannot post questions." });
+    }
 
     const newQuestion = new QuestionModel({
       text,
@@ -82,9 +89,16 @@ UserRouter.post("/questions", auth, async (req, res) => {
 UserRouter.get("/questions", auth, async (req, res) => {
   try {
     let query = {};
-    if (!req.isAdmin) { // Assuming req.isAdmin is set in the isAdmin middleware
+    if (!req.isAdmin ) { 
       query.approved = true;
     }
+    
+    // Fetch list of banned users
+    const bannedUsers = await UserModel.find({ banned: true }).select('_id');
+    const bannedUserIds = bannedUsers.map(user => user._id);
+    
+    // Update the query to filter out questions from banned users
+    query.userId = { $nin: bannedUserIds };
 
     const questions = await QuestionModel.find(query);
     
@@ -126,10 +140,17 @@ UserRouter.get("/answers", auth, async (req, res) => {
     if (!req.isAdmin) { 
       query.approved = true;
     }
+    
+    // Fetch list of banned users
+    const bannedUsers = await UserModel.find({ banned: true }).select('_id');
+    const bannedUserIds = bannedUsers.map(user => user._id);
+
+    // Update the query to filter out answers from banned users
+    query.userId = { $nin: bannedUserIds };
 
     const answers = await AnswerModel.find(query)
       .populate('questionId') 
-      .populate('userId', 'username email') 
+      .populate('userId', 'username email');
     
     if (answers && answers.length > 0) {
       res.json(answers);
@@ -140,6 +161,8 @@ UserRouter.get("/answers", auth, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+
 // UserRouter.get('/questions/:questionId', async (req, res) => {
 //   try {
 //     const questionId = req.params.questionId;
