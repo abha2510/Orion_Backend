@@ -59,19 +59,7 @@ UserRouter.get("/", auth, async (req, res) => {
   }
 });
 
-// Update profile
-UserRouter.patch("/profile", auth, async (req, res) => {
-  try {
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      req.userId,
-      req.body,
-      { new: true }
-    );
-    res.json(updatedUser);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+
 // Post a new question
 UserRouter.post("/questions", auth, async (req, res) => {
   try {
@@ -109,6 +97,29 @@ UserRouter.get("/questions", auth, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+UserRouter.get("/questions/:questionId", auth, async (req, res) => {
+  try {
+    const { questionId } = req.params; // Extract questionId from the request parameters
+
+    let question = await QuestionModel.findById(questionId);
+
+    // If the user isn't an admin, make sure the question is approved
+    if (!req.isAdmin && !question.approved) {
+      return res.status(403).json({ message: "Unauthorized or question not approved" });
+    }
+
+    if (question) {
+      res.json(question);
+    } else {
+      res.status(404).json({ message: "Question not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 UserRouter.get("/answers", auth, async (req, res) => {
   try {
     let query = {};
@@ -129,26 +140,53 @@ UserRouter.get("/answers", auth, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-UserRouter.get('/questions/:questionId', async (req, res) => {
+// UserRouter.get('/questions/:questionId', async (req, res) => {
+//   try {
+//     const questionId = req.params.questionId;
+
+//     // Fetch the question by its ID
+//     const question = await QuestionModel.findById(questionId).populate('userId', 'username'); // I assumed you might want to get the username from the User reference, adjust as needed
+
+//     if (!question) {
+//       return res.status(404).json({ message: 'Question not found' });
+//     }
+
+//     // Fetch all answers associated with the question
+//     const answers = await AnswerModel.find({ questionId: questionId }).populate('userId', 'username'); // Again, populating the username from the User reference, adjust as needed
+
+//     res.status(200).json({ question, answers });
+
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// });
+
+UserRouter.get('/questions', async (req, res) => {
   try {
-    const questionId = req.params.questionId;
+    const { searchText } = req.query;
+    let query = {};
 
-    // Fetch the question by its ID
-    const question = await QuestionModel.findById(questionId).populate('userId', 'username'); // I assumed you might want to get the username from the User reference, adjust as needed
-
-    if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+    if (searchText) {
+      query.text = new RegExp(searchText, 'i'); 
     }
 
-    // Fetch all answers associated with the question
-    const answers = await AnswerModel.find({ questionId: questionId }).populate('userId', 'username'); // Again, populating the username from the User reference, adjust as needed
+    // if (approved) {
+    //   query.approved = approved === 'true' ? true : false;
+    // }
+    
+    const questions = await QuestionModel.find(query).populate('userId', 'username');
+    console.log("Received query parameters:", req.query);
+    console.log("Constructed MongoDB query:", query);
+    console.log(questions)
 
-    res.status(200).json({ question, answers });
+    res.status(200).json({ questions });
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal Server Error");
   }
 });
+
 
 
 
