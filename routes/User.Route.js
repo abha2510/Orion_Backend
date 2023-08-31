@@ -158,7 +158,7 @@ UserRouter.get("/adminDashboard", auth, isAdmin, async (req, res) => {
     const [pendingQuestions, pendingAnswers, userList] = await Promise.all([
       QuestionModel.find({ approved: false }),
       AnswerModel.find({ approved: false }),
-      UserModel.find({ isAdmin: false})
+      UserModel.find({ role: "user" }).lean()
     ]);
 
     // Send the fetched data as a response
