@@ -386,5 +386,12 @@ UserRouter.patch("/:userId/unban", auth, isAdmin, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
+UserRouter.post("/logout", async (req, res) => {
+  try {
+    await UserModel.findByIdAndRemove(req.userId);
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 module.exports = UserRouter;
